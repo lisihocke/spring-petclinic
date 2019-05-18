@@ -88,7 +88,7 @@ class OwnerController {
 
         if (results.isEmpty()) {
             // no owners found
-            result.rejectValue("lastName", "notFound", "not found");
+            result.reject("ownerNotFound", "not found");
             return "owners/findOwners";
         } else if (results.size() == 1) {
             // 1 owner found

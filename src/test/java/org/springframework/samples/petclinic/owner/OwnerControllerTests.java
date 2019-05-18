@@ -32,11 +32,10 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.samples.petclinic.owner.Owner;
-import org.springframework.samples.petclinic.owner.OwnerController;
-import org.springframework.samples.petclinic.owner.OwnerRepository;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.HashSet;
 
 /**
  * Test class for {@link OwnerController}
@@ -47,7 +46,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(OwnerController.class)
 public class OwnerControllerTests {
 
-    private static final int TEST_OWNER_ID = 1;
+    private static final int TEST_OWNER_ID_1 = 1;
+    private static final int TEST_OWNER_ID_2 = 2;
+    private static final int TEST_OWNER_ID_3 = 3;
 
     @Autowired
     private MockMvc mockMvc;
@@ -56,17 +57,37 @@ public class OwnerControllerTests {
     private OwnerRepository owners;
 
     private Owner george;
+    private Owner maria1;
+    private Owner maria2;
 
     @Before
     public void setup() {
         george = new Owner();
-        george.setId(TEST_OWNER_ID);
+        george.setId(TEST_OWNER_ID_1);
         george.setFirstName("George");
         george.setLastName("Franklin");
         george.setAddress("110 W. Liberty St.");
         george.setCity("Madison");
         george.setTelephone("6085551023");
-        given(this.owners.findById(TEST_OWNER_ID)).willReturn(george);
+        given(this.owners.findById(TEST_OWNER_ID_1)).willReturn(george);
+
+        maria1 = new Owner();
+        maria1.setId(TEST_OWNER_ID_2);
+        maria1.setFirstName("Maria");
+        maria1.setLastName("Estaban");
+        maria1.setAddress("110 W. Liberty St.");
+        maria1.setCity("Madison");
+        maria1.setTelephone("6085551023");
+        given(this.owners.findById(TEST_OWNER_ID_2)).willReturn(maria1);
+
+        maria2 = new Owner();
+        maria2.setId(TEST_OWNER_ID_3);
+        maria2.setFirstName("Maria");
+        maria2.setLastName("Estaban");
+        maria2.setAddress("110 W. Liberty St.");
+        maria2.setCity("Madison");
+        maria2.setTelephone("6085551023");
+        given(this.owners.findById(TEST_OWNER_ID_3)).willReturn(maria2);
     }
 
     @Test
@@ -112,37 +133,93 @@ public class OwnerControllerTests {
     }
 
     @Test
-    public void testProcessFindFormSuccess() throws Exception {
-        given(this.owners.findByLastName("")).willReturn(Lists.newArrayList(george, new Owner()));
+    public void testProcessFindFormWithoutParameters() throws Exception {
+        given(this.owners.findByFullName("", "")).willReturn(new HashSet<Owner>(Lists.newArrayList(george, maria1, maria2)));
         mockMvc.perform(get("/owners"))
             .andExpect(status().isOk())
             .andExpect(view().name("owners/ownersList"));
     }
 
     @Test
-    public void testProcessFindFormByLastName() throws Exception {
-        given(this.owners.findByLastName(george.getLastName())).willReturn(Lists.newArrayList(george));
+    public void testProcessFindFormFindOneOwnerByFullName() throws Exception {
+        given(this.owners.findByFullName(george.getLastName(), george.getFirstName())).willReturn(new HashSet<Owner>(Lists.newArrayList(george)));
         mockMvc.perform(get("/owners")
             .param("lastName", "Franklin")
+            .param("firstName", "George")
         )
             .andExpect(status().is3xxRedirection())
-            .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
+            .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
+    }
+
+    @Test
+    public void testProcessFindFormFindOneOwnerByLastName() throws Exception {
+        given(this.owners.findByFullName(george.getLastName(), "")).willReturn(new HashSet<Owner>(Lists.newArrayList(george)));
+        mockMvc.perform(get("/owners")
+            .param("lastName", "Franklin")
+            .param("firstName", "")
+        )
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
+    }
+
+    @Test
+    public void testProcessFindFormFindOneOwnerByFirstName() throws Exception {
+        given(this.owners.findByFullName("", george.getFirstName())).willReturn(new HashSet<Owner>(Lists.newArrayList(george)));
+        mockMvc.perform(get("/owners")
+            .param("lastName", "")
+            .param("firstName", "George")
+        )
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
+    }
+
+    @Test
+    public void testProcessFindFormFindMultipleOwnersByFullName() throws Exception {
+        given(this.owners.findByFullName(maria1.getLastName(), maria1.getFirstName())).willReturn(new HashSet<Owner>(Lists.newArrayList(maria1, maria2)));
+        mockMvc.perform(get("/owners")
+            .param("lastName", "Estaban")
+            .param("firstName", "Maria")
+        )
+            .andExpect(status().isOk())
+            .andExpect(view().name("owners/ownersList"));
+    }
+
+    @Test
+    public void testProcessFindFormFindMultipleOwnersByLastName() throws Exception {
+        given(this.owners.findByFullName(maria1.getLastName(), "")).willReturn(new HashSet<Owner>(Lists.newArrayList(maria1, maria2)));
+        mockMvc.perform(get("/owners")
+            .param("lastName", "Estaban")
+            .param("firstName", "")
+        )
+            .andExpect(status().isOk())
+            .andExpect(view().name("owners/ownersList"));
+    }
+
+    @Test
+    public void testProcessFindFormFindMultipleOwnersByFirstName() throws Exception {
+        given(this.owners.findByFullName("", maria1.getFirstName())).willReturn(new HashSet<Owner>(Lists.newArrayList(maria1, maria2)));
+        mockMvc.perform(get("/owners")
+            .param("lastName", "")
+            .param("firstName", "Maria")
+        )
+            .andExpect(status().isOk())
+            .andExpect(view().name("owners/ownersList"));
     }
 
     @Test
     public void testProcessFindFormNoOwnersFound() throws Exception {
         mockMvc.perform(get("/owners")
-            .param("lastName", "Unknown Surname")
+            .param("lastName", "Unknown last name")
+            .param("firstName", "Unknown first name")
         )
             .andExpect(status().isOk())
-            .andExpect(model().attributeHasFieldErrors("owner", "lastName"))
-            .andExpect(model().attributeHasFieldErrorCode("owner", "lastName", "notFound"))
+            .andExpect(model().hasErrors())
             .andExpect(view().name("owners/findOwners"));
     }
 
     @Test
     public void testInitUpdateOwnerForm() throws Exception {
-        mockMvc.perform(get("/owners/{ownerId}/edit", TEST_OWNER_ID))
+        mockMvc.perform(get("/owners/{ownerId}/edit", TEST_OWNER_ID_1))
             .andExpect(status().isOk())
             .andExpect(model().attributeExists("owner"))
             .andExpect(model().attribute("owner", hasProperty("lastName", is("Franklin"))))
@@ -155,7 +232,7 @@ public class OwnerControllerTests {
 
     @Test
     public void testProcessUpdateOwnerFormSuccess() throws Exception {
-        mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID)
+        mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID_1)
             .param("firstName", "Joe")
             .param("lastName", "Bloggs")
             .param("address", "123 Caramel Street")
@@ -168,7 +245,7 @@ public class OwnerControllerTests {
 
     @Test
     public void testProcessUpdateOwnerFormHasErrors() throws Exception {
-        mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID)
+        mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID_1)
             .param("firstName", "Joe")
             .param("lastName", "Bloggs")
             .param("city", "London")
@@ -182,7 +259,7 @@ public class OwnerControllerTests {
 
     @Test
     public void testShowOwner() throws Exception {
-        mockMvc.perform(get("/owners/{ownerId}", TEST_OWNER_ID))
+        mockMvc.perform(get("/owners/{ownerId}", TEST_OWNER_ID_1))
             .andExpect(status().isOk())
             .andExpect(model().attribute("owner", hasProperty("lastName", is("Franklin"))))
             .andExpect(model().attribute("owner", hasProperty("firstName", is("George"))))
