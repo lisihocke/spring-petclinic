@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Juergen Hoeller
@@ -78,12 +78,14 @@ class OwnerController {
     public String processFindForm(Owner owner, BindingResult result, Map<String, Object> model) {
 
         // allow parameterless GET request for /owners to return all records
-        if (owner.getLastName() == null) {
-            owner.setLastName(""); // empty string signifies broadest possible search
+        if (owner.getLastName() == null && owner.getFirstName() == null) {
+            // empty string signifies broadest possible search
+            owner.setLastName("");
+            owner.setFirstName("");
         }
 
-        // find owners by last name
-        Collection<Owner> results = this.owners.findByLastName(owner.getLastName());
+        Set<Owner> results = this.owners.findByFullName(owner.getLastName(), owner.getFirstName());
+
         if (results.isEmpty()) {
             // no owners found
             result.rejectValue("lastName", "notFound", "not found");
