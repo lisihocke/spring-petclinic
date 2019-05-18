@@ -136,6 +136,7 @@ public class OwnerControllerTests {
     public void testProcessFindFormWithoutParameters() throws Exception {
         given(this.owners.findByFullName("", "")).willReturn(new HashSet<Owner>(Lists.newArrayList(george, maria1, maria2)));
         mockMvc.perform(get("/owners"))
+            .andExpect(model().hasNoErrors())
             .andExpect(status().isOk())
             .andExpect(view().name("owners/ownersList"));
     }
@@ -147,6 +148,7 @@ public class OwnerControllerTests {
             .param("lastName", "Franklin")
             .param("firstName", "George")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
     }
@@ -158,6 +160,7 @@ public class OwnerControllerTests {
             .param("lastName", "Franklin")
             .param("firstName", "")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
     }
@@ -169,6 +172,7 @@ public class OwnerControllerTests {
             .param("lastName", "")
             .param("firstName", "George")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID_1));
     }
@@ -180,6 +184,7 @@ public class OwnerControllerTests {
             .param("lastName", "Estaban")
             .param("firstName", "Maria")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().isOk())
             .andExpect(view().name("owners/ownersList"));
     }
@@ -191,6 +196,7 @@ public class OwnerControllerTests {
             .param("lastName", "Estaban")
             .param("firstName", "")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().isOk())
             .andExpect(view().name("owners/ownersList"));
     }
@@ -202,6 +208,7 @@ public class OwnerControllerTests {
             .param("lastName", "")
             .param("firstName", "Maria")
         )
+            .andExpect(model().hasNoErrors())
             .andExpect(status().isOk())
             .andExpect(view().name("owners/ownersList"));
     }
@@ -212,8 +219,8 @@ public class OwnerControllerTests {
             .param("lastName", "Unknown last name")
             .param("firstName", "Unknown first name")
         )
-            .andExpect(status().isOk())
             .andExpect(model().hasErrors())
+            .andExpect(status().isOk())
             .andExpect(view().name("owners/findOwners"));
     }
 
